@@ -40,14 +40,14 @@ fi
 echo "Running data_race_executable 20 times..."
 for i in {1..20}; do
   # echo "Run #$i:"
-  ./$data_race_executable
+  echo "3000" | ./$data_race_executable
 done
 
 # 运行 atomicity_violation_example 20次
 echo "Running atomicity_violation_executable 20 times..."
 for i in {1..20}; do
   # echo "Run #$i:"
-  ./$atomicity_violation_executable
+  echo "3000" | ./$atomicity_violation_executable
 done
 
 echo "Finished running all tests."

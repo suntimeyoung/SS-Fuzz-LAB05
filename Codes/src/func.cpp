@@ -1,13 +1,44 @@
 #include <iostream>
+#include <fstream>
+#include <pthread.h>
 
 using namespace std;
 
-extern "C" void memoryAccessHook(void* addr) {
-    // 在这里处理内存访问的逻辑
-    cout << "Memory access at: " << addr << endl;
+pthread_mutex_t mutex_file_rw = PTHREAD_MUTEX_INITIALIZER;
+fstream f;
+
+extern "C" void memoryLoadHook(void* addr) {
+    cout << "Memory Load at: " << addr << endl;
+    pthread_mutex_lock(&mutex_file_rw);
+    f.open("../log/log.txt", ios::out | ios::app);
+    f << "Load " << addr << endl;
+    f.close();
+    pthread_mutex_unlock(&mutex_file_rw);
 }
 
-extern "C" void lockOperationHook(void* addr) {
-    // 在这里处理锁操作的逻辑
-    cout << "Lock operation on: " << addr << endl;
+extern "C" void memoryStoreHook(void* addr) {
+    cout << "Memory Store at: " << addr << endl;
+    pthread_mutex_lock(&mutex_file_rw);
+    f.open("../log/log.txt", ios::out | ios::app);
+    f << "Store " << addr << endl;
+    f.close();
+    pthread_mutex_unlock(&mutex_file_rw);
+}
+
+extern "C" void lockAddHook(void* addr) {
+    cout << "Lock Add on: " << addr << endl;
+    pthread_mutex_lock(&mutex_file_rw);
+    f.open("../log/log.txt", ios::out | ios::app);
+    f << "Add " << addr << endl;
+    f.close();
+    pthread_mutex_unlock(&mutex_file_rw);
+}
+
+extern "C" void lockRemoveHook(void* addr) {
+    cout << "Lock Remove on: " << addr << endl;
+    pthread_mutex_lock(&mutex_file_rw);
+    f.open("../log/log.txt", ios::out | ios::app);
+    f << "Remove " << addr << endl;
+    f.close();
+    pthread_mutex_unlock(&mutex_file_rw);
 }

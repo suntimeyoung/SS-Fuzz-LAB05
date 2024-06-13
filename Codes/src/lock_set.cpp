@@ -44,27 +44,40 @@ void modify(Module *mod) {
 
     // 创建插桩函数声明
     FunctionType *hookType = FunctionType::get(Type::getVoidTy(Context), {Type::getInt8PtrTy(Context)}, false);
-    FunctionCallee memoryAccessHook = mod->getOrInsertFunction("memoryAccessHook", hookType);
-    FunctionCallee lockOperationHook = mod->getOrInsertFunction("lockOperationHook", hookType);
+    FunctionCallee memoryLoadHook = mod->getOrInsertFunction("memoryLoadHook", hookType);
+    FunctionCallee memoryStoreHook = mod->getOrInsertFunction("memoryStoreHook", hookType);
+    FunctionCallee lockAddHook = mod->getOrInsertFunction("lockAddHook", hookType);
+    FunctionCallee lockRemoveHook = mod->getOrInsertFunction("lockRemoveHook", hookType);
 
     for (Function &F : *mod) {
         for (Instruction &I : instructions(F)) {
             // 插桩内存访问
-            if (isa<LoadInst>(&I) || isa<StoreInst>(&I)) {
-                Value *Addr = isa<LoadInst>(&I) ? cast<LoadInst>(&I)->getPointerOperand() : cast<StoreInst>(&I)->getPointerOperand();
+            if (isa<LoadInst>(&I)) {
+                Value *Addr = cast<LoadInst>(&I)->getPointerOperand();
                 Builder.SetInsertPoint(&I);
                 Value *AddrAsInt8Ptr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(Context));
-                Builder.CreateCall(memoryAccessHook, {AddrAsInt8Ptr});
+                Builder.CreateCall(memoryLoadHook, {AddrAsInt8Ptr});
+            }
+            if (isa<StoreInst>(&I)) {
+                Value *Addr = cast<StoreInst>(&I)->getPointerOperand();
+                Builder.SetInsertPoint(&I);
+                Value *AddrAsInt8Ptr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(Context));
+                Builder.CreateCall(memoryStoreHook, {AddrAsInt8Ptr});
             }
 
             // 插桩锁操作
             if (isa<CallInst>(&I)) {
                 CallInst *callInst = cast<CallInst>(&I);
                 Function *calledFunc = callInst->getCalledFunction();
-                if (calledFunc && (calledFunc->getName() == "pthread_mutex_lock" || calledFunc->getName() == "pthread_mutex_unlock")) {
+                if (calledFunc && (calledFunc->getName() == "pthread_mutex_lock")) {
                     Builder.SetInsertPoint(callInst);
                     Value *AddrAsInt8Ptr = Builder.CreateBitCast(callInst->getArgOperand(0), Type::getInt8PtrTy(Context));
-                    Builder.CreateCall(lockOperationHook, {AddrAsInt8Ptr});
+                    Builder.CreateCall(lockAddHook, {AddrAsInt8Ptr});
+                }
+                if (calledFunc && (calledFunc->getName() == "pthread_mutex_unlock")) {
+                    Builder.SetInsertPoint(callInst);
+                    Value *AddrAsInt8Ptr = Builder.CreateBitCast(callInst->getArgOperand(0), Type::getInt8PtrTy(Context));
+                    Builder.CreateCall(lockRemoveHook, {AddrAsInt8Ptr});
                 }
             }
         }

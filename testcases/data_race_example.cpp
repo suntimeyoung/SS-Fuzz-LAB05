@@ -1,12 +1,12 @@
 #include <iostream>
 #include <pthread.h>
-#define RUN_TIME 3000
 
 int counter = 0;
+int run_time;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void* increment(void* arg) {
-    for (int i = 0; i < RUN_TIME; ++i) {
+    for (int i = 0; i < run_time; ++i) {
         pthread_mutex_lock(&mutex);
         ++counter;
         pthread_mutex_unlock(&mutex);
@@ -15,13 +15,14 @@ void* increment(void* arg) {
 }
 
 void* decrement(void* arg) {
-    for (int i = 0; i < RUN_TIME; ++i) {
+    for (int i = 0; i < run_time; ++i) {
         --counter;
     }
     return nullptr;
 }
 
 int main() {
+    std::cin >> run_time;
     pthread_t thread1, thread2;
 
     pthread_create(&thread1, nullptr, increment, nullptr);
