@@ -8,8 +8,8 @@ chmod +x ../bin/modify
 clang++-12 -c func.cpp -o ../bin/func.o
 
 # 编译源文件
-clang++-12 -S -emit-llvm ../../testcases/data_race_example.cpp -o ../bin/data_race_example.ll
-clang++-12 -S -emit-llvm ../../testcases/atomicity_violation_example.cpp -o ../bin/atomicity_violation_example.ll
+clang++-12 -g -S -emit-llvm ../../testcases/data_race_example.cpp -o ../bin/data_race_example.ll
+clang++-12 -g -S -emit-llvm ../../testcases/atomicity_violation_example.cpp -o ../bin/atomicity_violation_example.ll
 
 # 修改ll文件
 ../bin/modify ../bin/data_race_example.ll ../bin/data_race_example_ed.ll
@@ -29,13 +29,14 @@ rm ../bin/*.ll
 rm ../bin/*.o
 
 # 运行相关可执行文件
-echo "Testing file of data_race_example_ed"
+echo "======= Testing file of data_race_example_ed ======="
 rm ../log/*
 echo "1" | ../bin/data_race_example_ed
 ../bin/check_lock
+echo "-----------------------------------------------------"
 
-
-echo "Testing file of atomicity_violation_example_ed"
+echo "======= Testing file of atomicity_violation_example_ed ======="
 rm ../log/*
 echo "1" | ../bin/atomicity_violation_example_ed
 ../bin/check_lock
+echo "-----------------------------------------------------"

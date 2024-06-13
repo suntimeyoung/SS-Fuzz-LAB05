@@ -29,18 +29,19 @@ int main() {
 void all_lock_init() {
     fstream f;
     f.open(log_file, ios::in);
-    string op, addr;
+    string op, addr, line_num;
     while (getline(f, op)) {
         getline(f, addr);
+        getline(f, line_num);
         if (op == "Add") {
             all_lock.insert(hexStringToNumber(addr));
         }
     }
     f.close();
-    cout << "All Locks are :" << endl;
-    for (const auto& element: all_lock) {
-        cout << element << endl;
-    }
+    // cout << "All Locks are :" << endl;
+    // for (const auto& element: all_lock) {
+    //     cout << element << endl;
+    // }
 }
 
 void check_log() {
@@ -48,9 +49,10 @@ void check_log() {
     f.open(log_file, ios::in);
 
     set<uint64_t> current_lock;
-    string op, addr;
+    string op, addr, line_num;
     while (getline(f, op)) {
         getline(f, addr);
+        getline(f, line_num);
         uint64_t addr_num = hexStringToNumber(addr);
         
         if (op == "Add") {
@@ -73,7 +75,7 @@ void check_log() {
                 );
             variable_lock[addr_num] = tmp;
             if (variable_lock[addr_num].size() == 0 && !data_race_addr.count(addr_num)) {
-                cout << "Warning: Data Race at " << addr << endl;
+                cout << "Warning: Data Race at line " << line_num << ", addr is " << addr << endl;
                 data_race_addr.insert(addr_num);
             }
         }

@@ -7,11 +7,12 @@
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/DebugInfo.h>
 #include <set>
 
 using namespace llvm;
 #include <iostream>
-using namespace std; 
+using namespace std;
 
 void modify(Module*);
 
@@ -44,7 +45,7 @@ void modify(Module *mod) {
     IRBuilder<> Builder(Context);
 
     // 创建插桩函数声明
-    FunctionType *hookType = FunctionType::get(Type::getVoidTy(Context), {Type::getInt8PtrTy(Context)}, false);
+    FunctionType *hookType = FunctionType::get(Type::getVoidTy(Context), {Type::getInt8PtrTy(Context), Type::getInt32Ty(Context)}, false);
     FunctionCallee memoryLoadHook = mod->getOrInsertFunction("memoryLoadHook", hookType);
     FunctionCallee memoryStoreHook = mod->getOrInsertFunction("memoryStoreHook", hookType);
     FunctionCallee lockAddHook = mod->getOrInsertFunction("lockAddHook", hookType);
@@ -59,18 +60,25 @@ void modify(Module *mod) {
         }
 
         for (Instruction &I : instructions(F)) {
+            unsigned lineNumber = 0;
+            if (DILocation *Loc = I.getDebugLoc()) {
+                lineNumber = Loc->getLine();
+            }
+
             // 插桩内存访问
             if (isa<LoadInst>(&I) && !localVars.count(cast<LoadInst>(&I)->getPointerOperand())) {
                 Value *Addr = cast<LoadInst>(&I)->getPointerOperand();
                 Builder.SetInsertPoint(&I);
                 Value *AddrAsInt8Ptr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(Context));
-                Builder.CreateCall(memoryLoadHook, {AddrAsInt8Ptr});
+                Value *LineNum = ConstantInt::get(Type::getInt32Ty(Context), lineNumber);
+                Builder.CreateCall(memoryLoadHook, {AddrAsInt8Ptr, LineNum});
             }
             if (isa<StoreInst>(&I) && !localVars.count(cast<StoreInst>(&I)->getPointerOperand())) {
                 Value *Addr = cast<StoreInst>(&I)->getPointerOperand();
                 Builder.SetInsertPoint(&I);
                 Value *AddrAsInt8Ptr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(Context));
-                Builder.CreateCall(memoryStoreHook, {AddrAsInt8Ptr});
+                Value *LineNum = ConstantInt::get(Type::getInt32Ty(Context), lineNumber);
+                Builder.CreateCall(memoryStoreHook, {AddrAsInt8Ptr, LineNum});
             }
 
             // 插桩锁操作
@@ -80,12 +88,14 @@ void modify(Module *mod) {
                 if (calledFunc && (calledFunc->getName() == "pthread_mutex_lock")) {
                     Builder.SetInsertPoint(callInst);
                     Value *AddrAsInt8Ptr = Builder.CreateBitCast(callInst->getArgOperand(0), Type::getInt8PtrTy(Context));
-                    Builder.CreateCall(lockAddHook, {AddrAsInt8Ptr});
+                    Value *LineNum = ConstantInt::get(Type::getInt32Ty(Context), lineNumber);
+                    Builder.CreateCall(lockAddHook, {AddrAsInt8Ptr, LineNum});
                 }
                 if (calledFunc && (calledFunc->getName() == "pthread_mutex_unlock")) {
                     Builder.SetInsertPoint(callInst);
                     Value *AddrAsInt8Ptr = Builder.CreateBitCast(callInst->getArgOperand(0), Type::getInt8PtrTy(Context));
-                    Builder.CreateCall(lockRemoveHook, {AddrAsInt8Ptr});
+                    Value *LineNum = ConstantInt::get(Type::getInt32Ty(Context), lineNumber);
+                    Builder.CreateCall(lockRemoveHook, {AddrAsInt8Ptr, LineNum});
                 }
             }
         }
