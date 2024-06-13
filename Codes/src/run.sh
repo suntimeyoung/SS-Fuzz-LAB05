@@ -25,5 +25,6 @@ clang++-12 ../bin/atomicity_violation_example_ed.o ../bin/func.o -o ../bin/atomi
 
 # 运行相关可执行文件
 
+rm ../log/*
 echo "1" | ../bin/data_race_example_ed
 # echo "1" | ../bin/atomicity_violation_example_ed
