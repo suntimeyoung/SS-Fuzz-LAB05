@@ -22,9 +22,20 @@ clang++-12 -c ../bin/atomicity_violation_example_ed.ll -o ../bin/atomicity_viola
 # 生成可执行文件
 clang++-12 ../bin/data_race_example_ed.o ../bin/func.o -o ../bin/data_race_example_ed
 clang++-12 ../bin/atomicity_violation_example_ed.o ../bin/func.o -o ../bin/atomicity_violation_example_ed
+clang++-12 check_lock.cpp -o ../bin/check_lock
+
+# 清理垃圾
+rm ../bin/*.ll
+rm ../bin/*.o
 
 # 运行相关可执行文件
-
+echo "Testing file of data_race_example_ed"
 rm ../log/*
 echo "1" | ../bin/data_race_example_ed
-# echo "1" | ../bin/atomicity_violation_example_ed
+../bin/check_lock
+
+
+echo "Testing file of atomicity_violation_example_ed"
+rm ../log/*
+echo "1" | ../bin/atomicity_violation_example_ed
+../bin/check_lock

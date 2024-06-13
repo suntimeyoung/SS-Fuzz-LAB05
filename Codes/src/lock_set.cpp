@@ -7,6 +7,7 @@
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Instructions.h>
+#include <set>
 
 using namespace llvm;
 #include <iostream>
@@ -50,15 +51,22 @@ void modify(Module *mod) {
     FunctionCallee lockRemoveHook = mod->getOrInsertFunction("lockRemoveHook", hookType);
 
     for (Function &F : *mod) {
+        set<Value*> localVars;
+        for (Instruction &I : instructions(F)) {
+            if (AllocaInst *allocaInst = dyn_cast<AllocaInst>(&I)) {
+                localVars.insert(allocaInst);
+            }
+        }
+
         for (Instruction &I : instructions(F)) {
             // 插桩内存访问
-            if (isa<LoadInst>(&I)) {
+            if (isa<LoadInst>(&I) && !localVars.count(cast<LoadInst>(&I)->getPointerOperand())) {
                 Value *Addr = cast<LoadInst>(&I)->getPointerOperand();
                 Builder.SetInsertPoint(&I);
                 Value *AddrAsInt8Ptr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(Context));
                 Builder.CreateCall(memoryLoadHook, {AddrAsInt8Ptr});
             }
-            if (isa<StoreInst>(&I)) {
+            if (isa<StoreInst>(&I) && !localVars.count(cast<StoreInst>(&I)->getPointerOperand())) {
                 Value *Addr = cast<StoreInst>(&I)->getPointerOperand();
                 Builder.SetInsertPoint(&I);
                 Value *AddrAsInt8Ptr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(Context));

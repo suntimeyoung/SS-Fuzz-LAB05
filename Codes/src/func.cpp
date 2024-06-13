@@ -8,7 +8,7 @@ pthread_mutex_t mutex_file_rw = PTHREAD_MUTEX_INITIALIZER;
 fstream f;
 
 extern "C" void memoryLoadHook(void* addr) {
-    cout << "Memory Load at: " << addr << endl;
+    // cout << "Memory Load at: " << addr << endl;
     pthread_mutex_lock(&mutex_file_rw);
     f.open("../log/log.txt", ios::out | ios::app);
     f << "Load\n" << addr << endl;
@@ -17,7 +17,7 @@ extern "C" void memoryLoadHook(void* addr) {
 }
 
 extern "C" void memoryStoreHook(void* addr) {
-    cout << "Memory Store at: " << addr << endl;
+    // cout << "Memory Store at: " << addr << endl;
     pthread_mutex_lock(&mutex_file_rw);
     f.open("../log/log.txt", ios::out | ios::app);
     f << "Store\n" << addr << endl;
@@ -26,7 +26,7 @@ extern "C" void memoryStoreHook(void* addr) {
 }
 
 extern "C" void lockAddHook(void* addr) {
-    cout << "Lock Add on: " << addr << endl;
+    // cout << "Lock Add on: " << addr << endl;
     pthread_mutex_lock(&mutex_file_rw);
     f.open("../log/log.txt", ios::out | ios::app);
     f << "Add\n" << addr << endl;
@@ -35,7 +35,7 @@ extern "C" void lockAddHook(void* addr) {
 }
 
 extern "C" void lockRemoveHook(void* addr) {
-    cout << "Lock Remove on: " << addr << endl;
+    // cout << "Lock Remove on: " << addr << endl;
     pthread_mutex_lock(&mutex_file_rw);
     f.open("../log/log.txt", ios::out | ios::app);
     f << "Remove\n" << addr << endl;
