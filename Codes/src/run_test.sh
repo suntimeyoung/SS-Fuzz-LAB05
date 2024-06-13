@@ -57,6 +57,7 @@ for i in {1..20}; do
   # echo "Run #$i:"
   echo "3000" | ./$data_race_executable
 done
+echo "----------------------------------------------"
 
 # 运行 atomicity_violation_example 20次
 echo "Running atomicity_violation_executable 20 times..."
@@ -64,6 +65,7 @@ for i in {1..20}; do
   # echo "Run #$i:"
   echo "3000" | ./$atomicity_violation_executable
 done
+echo "----------------------------------------------"
 
 # 运行 shared_array_example 20次
 echo "Running shared_array_example 20 times..."
@@ -72,4 +74,5 @@ for i in {1..20}; do
   echo "5" | ./$shared_array_executable
 done
 
+echo "----------------------------------------------"
 echo "Finished running all tests."

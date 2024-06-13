@@ -75,7 +75,7 @@ void check_log() {
                 );
             variable_lock[addr_num] = tmp;
             if (variable_lock[addr_num].size() == 0 && !data_race_addr.count(addr_num)) {
-                cout << "Warning: Data Race at line " << line_num << ", addr is " << addr << endl;
+                cout << "Warning: concurrency vulnerability at line " << line_num << ", addr is " << addr << endl;
                 data_race_addr.insert(addr_num);
             }
         }
